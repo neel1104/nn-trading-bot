@@ -14,7 +14,7 @@ analyzer = (
     MarketStructureAnalyzer(df)
     .filter_inside_bars()
     .identify_pivots(min_candles=2)
-    .find_bos(distance_multiplier=1.0)  # Use the new parameter
+    .find_bos()
 )
 
 # 3. Visualize
