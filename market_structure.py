@@ -17,6 +17,13 @@ class MarketStructureAnalyzer:
         self.df.dropna(subset=['Open', 'High', 'Low', 'Close'], inplace=True)
         for col in ['Open', 'High', 'Low', 'Close']:
             self.df[col] = pd.to_numeric(self.df[col])
+
+        # Calculate ATR
+        high_low = self.df['High'] - self.df['Low']
+        high_close = np.abs(self.df['High'] - self.df['Close'].shift())
+        low_close = np.abs(self.df['Low'] - self.df['Close'].shift())
+        tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+        self.df['atr'] = tr.ewm(com=14, min_periods=14).mean()
             
         self.df_valid = None
         self.df_pivots = None
@@ -120,8 +127,12 @@ class MarketStructureAnalyzer:
             for idx, lbl in zip(lows.index, labels):
                 df.at[idx, 'label'] = lbl
 
-    def find_bos(self) -> 'MarketStructureAnalyzer':
-        """Detects Break of Structure (BOS) using price close."""
+    def find_bos(self, distance_multiplier: float = 1.0) -> 'MarketStructureAnalyzer':
+        """
+        Detects Break of Structure (BOS) using price close.
+        Classifies BOS as 'good' or 'bad' based on the distance price travels
+        away from the broken level, measured in ATRs.
+        """
         if self.df_pivots is None:
             self.identify_pivots()
             
@@ -140,16 +151,22 @@ class MarketStructureAnalyzer:
                 last_pl_idx, last_pl_val = curr_idx, df['pivot_low'].iloc[i]
                 
             if last_ph_val and curr_close > last_ph_val:
+                distance = abs(curr_close - last_ph_val)
+                atr_at_break = df['atr'].iloc[i] if 'atr' in df.columns and i < len(df['atr']) else self.df['atr'].mean()
+                quality = 'good' if distance >= (atr_at_break * distance_multiplier) else 'bad'
                 self.bos_events.append({
                     'start_date': last_ph_idx, 'end_date': curr_idx,
-                    'level': last_ph_val, 'type': 'BOS', 'color': 'green'
+                    'level': last_ph_val, 'type': 'BOS', 'color': 'green', 'quality': quality
                 })
                 last_ph_val = None
                 
             elif last_pl_val and curr_close < last_pl_val:
+                distance = abs(curr_close - last_pl_val)
+                atr_at_break = df['atr'].iloc[i] if 'atr' in df.columns and i < len(df['atr']) else self.df['atr'].mean()
+                quality = 'good' if distance >= (atr_at_break * distance_multiplier) else 'bad'
                 self.bos_events.append({
                     'start_date': last_pl_idx, 'end_date': curr_idx,
-                    'level': last_pl_val, 'type': 'BOS', 'color': 'red'
+                    'level': last_pl_val, 'type': 'BOS', 'color': 'red', 'quality': quality
                 })
                 last_pl_val = None
         return self
@@ -182,13 +199,16 @@ class MarketStructureAnalyzer:
 
         # 2. Plot BOS Lines
         for bos in self.bos_events:
+            line_dash = "solid" if bos.get('quality') == 'good' else "dot"
             fig.add_shape(
                 type="line", x0=bos['start_date'], y0=bos['level'], x1=bos['end_date'], y1=bos['level'],
-                line=dict(color=bos['color'], width=1, dash="dot")
+                line=dict(color=bos['color'], width=1, dash=line_dash)
             )
             fig.add_annotation(
-                x=bos['end_date'], y=bos['level'], text="BOS", showarrow=False,
-                yshift=10 if bos['color'] == 'green' else -10, font=dict(color=bos['color'], size=9)
+                x=bos['end_date'], y=bos['level'], text=f"BOS ({bos.get('quality', 'N/A')[0]})",
+                showarrow=False,
+                yshift=10 if bos['color'] == 'green' else -10,
+                font=dict(color=bos['color'], size=9)
             )
 
         # 3. Plot Inside Bars
