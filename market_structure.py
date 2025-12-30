@@ -122,52 +122,60 @@ class MarketStructureAnalyzer:
 
     def find_bos(self) -> 'MarketStructureAnalyzer':
         """
-        Detects Break of Structure (BOS) using price close.
-        Classifies BOS as 'good' or 'bad' based on whether the next candle
-        also closes above/below the broken level.
+        Detects Break of Structure (BOS) and Change of Character (CHoCH).
+        - A CHoCH is a break of a Lower High (LH) or a Higher Low (HL).
+        - Classifies events as 'good' or 'bad' based on sustainability.
         """
         if self.df_pivots is None:
             self.identify_pivots()
-            
+
         df = self.df_pivots
-        last_ph_idx, last_ph_val = None, None
-        last_pl_idx, last_pl_val = None, None
+        last_ph_idx, last_ph_val, last_ph_label = None, None, None
+        last_pl_idx, last_pl_val, last_pl_label = None, None, None
         self.bos_events = []
-        
+
         for i in range(len(df)):
             curr_idx = df.index[i]
             curr_close = df['Close'].iloc[i]
-            
+
+            # Update last known swing points
             if not pd.isna(df['pivot_high'].iloc[i]):
-                last_ph_idx, last_ph_val = curr_idx, df['pivot_high'].iloc[i]
+                last_ph_idx = curr_idx
+                last_ph_val = df['pivot_high'].iloc[i]
+                last_ph_label = df['label'].iloc[i]
+
             if not pd.isna(df['pivot_low'].iloc[i]):
-                last_pl_idx, last_pl_val = curr_idx, df['pivot_low'].iloc[i]
-                
+                last_pl_idx = curr_idx
+                last_pl_val = df['pivot_low'].iloc[i]
+                last_pl_label = df['label'].iloc[i]
+
+            # Bullish Break
             if last_ph_val and curr_close > last_ph_val:
+                event_type = 'CHoCH' if last_ph_label == 'LH' else 'BOS'
                 quality = 'bad'
                 if i + 1 < len(df):
-                    next_close = df['Close'].iloc[i+1]
-                    if next_close > last_ph_val:
+                    if df['Close'].iloc[i+1] > last_ph_val:
                         quality = 'good'
 
                 self.bos_events.append({
                     'start_date': last_ph_idx, 'end_date': curr_idx,
-                    'level': last_ph_val, 'type': 'BOS', 'color': 'green', 'quality': quality
+                    'level': last_ph_val, 'type': event_type, 'color': 'green', 'quality': quality
                 })
-                last_ph_val = None
-                
+                last_ph_val = None  # Invalidate after break
+
+            # Bearish Break
             elif last_pl_val and curr_close < last_pl_val:
+                event_type = 'CHoCH' if last_pl_label == 'HL' else 'BOS'
                 quality = 'bad'
                 if i + 1 < len(df):
-                    next_close = df['Close'].iloc[i+1]
-                    if next_close < last_pl_val:
+                    if df['Close'].iloc[i+1] < last_pl_val:
                         quality = 'good'
 
                 self.bos_events.append({
                     'start_date': last_pl_idx, 'end_date': curr_idx,
-                    'level': last_pl_val, 'type': 'BOS', 'color': 'red', 'quality': quality
+                    'level': last_pl_val, 'type': event_type, 'color': 'red', 'quality': quality
                 })
-                last_pl_val = None
+                last_pl_val = None  # Invalidate after break
         return self
 
     def plot(self, title: str = "Market Structure Analysis", zoom_days: int = 30):
@@ -204,7 +212,7 @@ class MarketStructureAnalyzer:
                 line=dict(color=bos['color'], width=1, dash=line_dash)
             )
             fig.add_annotation(
-                x=bos['end_date'], y=bos['level'], text=f"BOS ({bos.get('quality', 'N/A')[0]})",
+                x=bos['end_date'], y=bos['level'], text=f"{bos['type']} ({bos.get('quality', 'N/A')[0]})",
                 showarrow=False,
                 yshift=10 if bos['color'] == 'green' else -10,
                 font=dict(color=bos['color'], size=9)
