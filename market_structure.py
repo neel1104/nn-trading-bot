@@ -42,7 +42,9 @@ class MarketStructureAnalyzer:
             curr_low = self.df["Low"].iloc[i]
 
             # Inside bar check (relative to last valid bar)
-            is_inside = (curr_high <= last_valid_high) and (curr_low >= last_valid_low)
+            is_inside = (curr_high <= last_valid_high) and (
+                curr_low >= last_valid_low
+            )
 
             if not is_inside:
                 valid_indices.append(self.df.index[i])
@@ -81,7 +83,7 @@ class MarketStructureAnalyzer:
                 df["is_green"].iloc[i - j] for j in range(min_candles)
             ):
                 if trend == "bear":
-                    search_range = df.iloc[current_trend_start_idx : i + 1]
+                    search_range = df.iloc[current_trend_start_idx:i + 1]
                     low_idx = search_range["Low"].idxmin()
                     df.at[low_idx, "pivot_low"] = search_range["Low"].min()
 
@@ -93,7 +95,7 @@ class MarketStructureAnalyzer:
                 df["is_red"].iloc[i - j] for j in range(min_candles)
             ):
                 if trend == "bull":
-                    search_range = df.iloc[current_trend_start_idx : i + 1]
+                    search_range = df.iloc[current_trend_start_idx:i + 1]
                     high_idx = search_range["High"].idxmax()
                     df.at[high_idx, "pivot_high"] = search_range["High"].max()
 
@@ -107,15 +109,18 @@ class MarketStructureAnalyzer:
 
     def _add_labels(self, df):
         """
-        Internal helper to assign market structure labels based on previous swing
-        points: HH: Higher High, LH: Lower High, HL: Higher Low, LL: Lower Low.
+        Internal helper to assign market structure labels based on previous
+        swing points: HH: Higher High, LH: Lower High, HL: Higher Low,
+        LL: Lower Low.
         """
         # Highs
         highs = df[df["pivot_high"].notna()]["pivot_high"]
         if not highs.empty:
             labels = ["H"]
             for i in range(1, len(highs)):
-                labels.append("HH" if highs.iloc[i] > highs.iloc[i - 1] else "LH")
+                labels.append(
+                    "HH" if highs.iloc[i] > highs.iloc[i - 1] else "LH"
+                )
             df.loc[highs.index, "label"] = labels
 
         # Lows
@@ -123,7 +128,9 @@ class MarketStructureAnalyzer:
         if not lows.empty:
             labels = ["L"]
             for i in range(1, len(lows)):
-                labels.append("HL" if lows.iloc[i] > lows.iloc[i - 1] else "LL")
+                labels.append(
+                    "HL" if lows.iloc[i] > lows.iloc[i - 1] else "LL"
+                )
             for idx, lbl in zip(lows.index, labels):
                 df.at[idx, "label"] = lbl
 
