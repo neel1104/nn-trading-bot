@@ -121,7 +121,11 @@ class MarketStructureAnalyzer:
                 df.at[idx, 'label'] = lbl
 
     def find_bos(self) -> 'MarketStructureAnalyzer':
-        """Detects Break of Structure (BOS) using price close."""
+        """
+        Detects Break of Structure (BOS) using price close.
+        Classifies BOS as 'good' or 'bad' based on whether the next candle
+        also closes above/below the broken level.
+        """
         if self.df_pivots is None:
             self.identify_pivots()
             
@@ -140,16 +144,28 @@ class MarketStructureAnalyzer:
                 last_pl_idx, last_pl_val = curr_idx, df['pivot_low'].iloc[i]
                 
             if last_ph_val and curr_close > last_ph_val:
+                quality = 'bad'
+                if i + 1 < len(df):
+                    next_close = df['Close'].iloc[i+1]
+                    if next_close > last_ph_val:
+                        quality = 'good'
+
                 self.bos_events.append({
                     'start_date': last_ph_idx, 'end_date': curr_idx,
-                    'level': last_ph_val, 'type': 'BOS', 'color': 'green'
+                    'level': last_ph_val, 'type': 'BOS', 'color': 'green', 'quality': quality
                 })
                 last_ph_val = None
                 
             elif last_pl_val and curr_close < last_pl_val:
+                quality = 'bad'
+                if i + 1 < len(df):
+                    next_close = df['Close'].iloc[i+1]
+                    if next_close < last_pl_val:
+                        quality = 'good'
+
                 self.bos_events.append({
                     'start_date': last_pl_idx, 'end_date': curr_idx,
-                    'level': last_pl_val, 'type': 'BOS', 'color': 'red'
+                    'level': last_pl_val, 'type': 'BOS', 'color': 'red', 'quality': quality
                 })
                 last_pl_val = None
         return self
@@ -182,13 +198,16 @@ class MarketStructureAnalyzer:
 
         # 2. Plot BOS Lines
         for bos in self.bos_events:
+            line_dash = "solid" if bos.get('quality') == 'good' else "dot"
             fig.add_shape(
                 type="line", x0=bos['start_date'], y0=bos['level'], x1=bos['end_date'], y1=bos['level'],
-                line=dict(color=bos['color'], width=1, dash="dot")
+                line=dict(color=bos['color'], width=1, dash=line_dash)
             )
             fig.add_annotation(
-                x=bos['end_date'], y=bos['level'], text="BOS", showarrow=False,
-                yshift=10 if bos['color'] == 'green' else -10, font=dict(color=bos['color'], size=9)
+                x=bos['end_date'], y=bos['level'], text=f"BOS ({bos.get('quality', 'N/A')[0]})",
+                showarrow=False,
+                yshift=10 if bos['color'] == 'green' else -10,
+                font=dict(color=bos['color'], size=9)
             )
 
         # 3. Plot Inside Bars
