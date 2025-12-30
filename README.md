@@ -25,6 +25,11 @@ A Python-based trading bot specialized in Market Structure (MS) and Price Action
    ```bash
    pipenv install
    ```
+3. (Optional) Set up pre-commit hooks for automated code formatting and linting:
+   ```bash
+   pip install pre-commit
+   pre-commit install
+   ```
 
 ### Usage
 You can run the analysis using the provided Jupyter notebook or by importing the `MarketStructureAnalyzer` in your script.

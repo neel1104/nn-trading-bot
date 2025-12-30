@@ -10,8 +10,11 @@ pandas = "*"
 numpy = "*"
 ipykernel = "*"
 nbformat = "*"
+kaleido = "*"
 
 [dev-packages]
+black = "*"
+flake8 = "*"
 
 [requires]
 python_version = "3.13"
