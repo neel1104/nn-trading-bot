@@ -1,12 +1,12 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3198a78109d802c8027d1165993cae17fac0dbdfd0444ad99057b22ed02f1901"
+            "sha256": "97c7bd30cdcb17a97ac32739f4c2ad6d667a4ef2150d318059391d234ab2b7f0"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_full_version": "3.13.1",
-            "python_version": "3.13"
+            "python_full_version": "3.12.12",
+            "python_version": "3.12"
         },
         "sources": [
             {
@@ -17,14 +17,6 @@
         ]
     },
     "default": {
-        "appnope": {
-            "hashes": [
-                "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee",
-                "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"
-            ],
-            "markers": "python_version >= '3.6'",
-            "version": "==0.1.4"
-        },
         "asttokens": {
             "hashes": [
                 "sha256:15a3ebc0f43c2d0a50eeafea25e19046c68398e487b9f1f5b517f7c0f40f976a",
