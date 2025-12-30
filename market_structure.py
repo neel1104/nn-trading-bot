@@ -178,7 +178,7 @@ class MarketStructureAnalyzer:
                 last_pl_val = None  # Invalidate after break
         return self
 
-    def plot(self, title: str = "Market Structure Analysis", zoom_days: int = 30):
+    def plot(self, title: str = "Market Structure Analysis", zoom_days: int = 30, filepath: Optional[str] = None):
         df = self.df
         fig = go.Figure(data=[go.Candlestick(
             x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Price'
@@ -240,4 +240,7 @@ class MarketStructureAnalyzer:
             xaxis=dict(range=[start_date, end_zoom]),
             height=800
         )
-        fig.show()
+        if filepath:
+            fig.write_html(filepath)
+        else:
+            fig.show()
