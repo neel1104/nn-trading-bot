@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from typing import List, Dict, Optional
+from candlestick_patterns import CandlestickPatternIdentifier
 
 class MarketStructureAnalyzer:
     """
@@ -178,6 +179,14 @@ class MarketStructureAnalyzer:
                 last_pl_val = None  # Invalidate after break
         return self
 
+    def with_candlestick_patterns(self) -> 'MarketStructureAnalyzer':
+        """
+        Identifies and adds candlestick patterns to the main DataFrame.
+        """
+        pattern_identifier = CandlestickPatternIdentifier(self.df)
+        self.df = pattern_identifier.identify_patterns()
+        return self
+
     def plot(self, title: str = "Market Structure Analysis", zoom_days: int = 30, filepath: Optional[str] = None):
         df = self.df
         fig = go.Figure(data=[go.Candlestick(
@@ -228,6 +237,18 @@ class MarketStructureAnalyzer:
                     marker=dict(color='gray', size=5, symbol='circle'),
                     name='Inside Bar'
                 ))
+
+        # 4. Plot Candlestick Patterns
+        if 'candlestick_pattern' in df.columns:
+            patterns = df[df['candlestick_pattern'].notna()]
+            for i, pattern in patterns.iterrows():
+                fig.add_annotation(
+                    x=i, y=pattern['High'],
+                    text=pattern['candlestick_pattern'],
+                    showarrow=True, arrowhead=1,
+                    ax=0, ay=-40,
+                    font=dict(size=9, color="purple")
+                )
 
         # Layout & Zoom
         start_date = df.index[0]
