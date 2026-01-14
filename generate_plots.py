@@ -3,7 +3,7 @@ import pandas as pd
 from market_structure import MarketStructureAnalyzer
 import os
 
-def generate_plot(ticker, period, interval, filename):
+def generate_plot(ticker, period, interval, filename, with_patterns=False):
     """
     Generates and saves a market structure plot.
     """
@@ -18,7 +18,12 @@ def generate_plot(ticker, period, interval, filename):
         .find_bos()
     )
 
+    if with_patterns:
+        analyzer.with_candlestick_patterns()
+
     title = f"{ticker} Market Structure ({period}, {interval})"
+    if with_patterns:
+        title += " with Candlestick Patterns"
     analyzer.plot(title=title, zoom_days=365, filepath=filename)
     print(f"Generated plot: {filename}")
 
@@ -30,12 +35,13 @@ def main():
         os.makedirs("docs")
 
     plots = [
-        {"ticker": "BTC-USD", "period": "1y", "interval": "1wk", "filename": "docs/btc-usd_weekly.html"},
-        {"ticker": "BTC-USD", "period": "1y", "interval": "1d", "filename": "docs/btc-usd_daily.html"},
+        {"ticker": "BTC-USD", "period": "1y", "interval": "1wk", "filename": "docs/btc-usd_weekly.html", "with_patterns": False},
+        {"ticker": "BTC-USD", "period": "1y", "interval": "1d", "filename": "docs/btc-usd_daily.html", "with_patterns": False},
+        {"ticker": "BTC-USD", "period": "1y", "interval": "1wk", "filename": "docs/btc-usd_weekly_patterns.html", "with_patterns": True},
     ]
 
     for plot in plots:
-        generate_plot(plot["ticker"], plot["period"], plot["interval"], plot["filename"])
+        generate_plot(plot["ticker"], plot["period"], plot["interval"], plot["filename"], plot["with_patterns"])
 
     with open("docs/index.html", "w") as f:
         f.write("<html><head><title>Market Structure Plots</title></head><body>\n")

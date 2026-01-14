@@ -15,6 +15,7 @@ analyzer = (
     .filter_inside_bars()
     .identify_pivots(min_candles=2)
     .find_bos()
+    .with_candlestick_patterns()
 )
 
 # 3. Visualize
