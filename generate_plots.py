@@ -38,6 +38,7 @@ def main():
         {"ticker": "BTC-USD", "period": "1y", "interval": "1wk", "filename": "docs/btc-usd_weekly.html", "with_patterns": False},
         {"ticker": "BTC-USD", "period": "1y", "interval": "1d", "filename": "docs/btc-usd_daily.html", "with_patterns": False},
         {"ticker": "BTC-USD", "period": "1y", "interval": "1wk", "filename": "docs/btc-usd_weekly_patterns.html", "with_patterns": True},
+        {"ticker": "BTC-USD", "period": "1y", "interval": "1d", "filename": "docs/btc-usd_daily_patterns.html", "with_patterns": True},
     ]
 
     for plot in plots:
